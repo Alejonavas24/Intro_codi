@@ -1,6 +1,6 @@
 import { AlgorithmId } from '../CompressionAlgorithmContract'
 import { BaseCompressionAlgorithm } from '../BaseCompressionAlgorithm'
-import { buildCompressionMetrics, buildFrequencyTable } from './codingMetrics'
+import { buildCompressionMetrics, buildFrequencyTable, resolveSymbols } from './codingMetrics'
 
 const buildHuffmanTree = (frequencyTable) => {
   const queue = frequencyTable.map(({ symbol, count, index }) => ({
@@ -50,12 +50,12 @@ export class HuffmanMockAlgorithm extends BaseCompressionAlgorithm {
     this.validateInput(input)
 
     const start = performance.now()
-    const text = input.text
-    const frequencyTable = buildFrequencyTable(text)
+    const symbols = resolveSymbols(input)
+    const frequencyTable = buildFrequencyTable(symbols)
     const huffmanTree = buildHuffmanTree(frequencyTable)
     const codeMap = buildCodeMap(huffmanTree)
     const { metrics, encodedBits, originalBits } = buildCompressionMetrics(
-      text,
+      input,
       frequencyTable,
       codeMap,
       start,
@@ -63,7 +63,7 @@ export class HuffmanMockAlgorithm extends BaseCompressionAlgorithm {
 
     return this.createReadyResult(
       metrics,
-      `Implementacion real de Huffman. ${frequencyTable.length} simbolos, ${encodedBits} bits codificados frente a ${originalBits} bits originales.`,
+      `Implementacion real de Huffman. ${symbols.length} simbolos procesados, ${frequencyTable.length} simbolos unicos, ${encodedBits} bits codificados frente a ${originalBits} bits originales.`,
     )
   }
 }

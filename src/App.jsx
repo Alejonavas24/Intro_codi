@@ -3,9 +3,15 @@ import './App.css'
 import { compressionAlgorithms } from './domain/compression/algorithms'
 import { CompressionComparatorService } from './domain/compression/CompressionComparatorService'
 import { AlgorithmStatus } from './domain/compression/CompressionAlgorithmContract'
+import {
+  detectSignalInputMode,
+  normalizeSignalInput,
+  SIGNAL_INPUT_MODE_LABELS,
+  SignalInputMode,
+} from './domain/compression/InputSignalNormalizer'
 
 const SAMPLE_TEXT =
-  'La teoría de la información permite modelar la incertidumbre de una fuente y analizar la eficiencia de diferentes esquemas de codificación sobre un mismo corpus.'
+  'La teoria de la informacion permite modelar la incertidumbre de una fuente y analizar la eficiencia de diferentes esquemas de codificacion sobre un mismo corpus.'
 
 const comparatorService = new CompressionComparatorService(compressionAlgorithms)
 
@@ -17,45 +23,146 @@ const formatMetric = (value, digits = 3) => {
   return value.toFixed(digits)
 }
 
+const formatBytes = (bytes) => {
+  if (!bytes) {
+    return '0 B'
+  }
+
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const createManualMetadata = () => ({
+  sourceType: 'manual',
+  name: 'Entrada manual',
+  mimeType: 'text/plain',
+  size: null,
+})
+
 function App() {
-  const [textInput, setTextInput] = useState(SAMPLE_TEXT)
+  const [signalText, setSignalText] = useState(SAMPLE_TEXT)
+  const [signalBytes, setSignalBytes] = useState(null)
+  const [sourceMetadata, setSourceMetadata] = useState(createManualMetadata)
+  const [inputMode, setInputMode] = useState(SignalInputMode.CHARACTERS)
   const [extensionOrder, setExtensionOrder] = useState(2)
   const [results, setResults] = useState([])
   const [resultsVersion, setResultsVersion] = useState(0)
-  const [statusMessage, setStatusMessage] = useState('Configura el texto y ejecuta la simulación.')
+  const [statusMessage, setStatusMessage] = useState('Configura la senal y ejecuta la simulacion.')
   const [isRunning, setIsRunning] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const textStats = useMemo(() => {
-    const normalized = textInput.trim()
-    return {
-      characters: normalized.length,
-      words: normalized ? normalized.split(/\s+/).length : 0,
-      symbols: new Set(normalized).size,
+  const normalizedSignal = useMemo(() => {
+    try {
+      return normalizeSignalInput({
+        text: signalText,
+        bytes: signalBytes,
+        mode: inputMode,
+        sourceMetadata,
+      })
+    } catch {
+      return null
     }
-  }, [textInput])
+  }, [inputMode, signalBytes, signalText, sourceMetadata])
+
+  const signalStats = normalizedSignal?.sourceMetadata ?? {
+    totalSymbols: 0,
+    uniqueSymbols: 0,
+    mode: inputMode,
+    modeLabel: SIGNAL_INPUT_MODE_LABELS[inputMode],
+    sourceType: sourceMetadata.sourceType,
+    name: sourceMetadata.name,
+    mimeType: sourceMetadata.mimeType,
+    size: sourceMetadata.size,
+  }
+
+  const handleTextChange = (event) => {
+    const nextText = event.target.value
+
+    setSignalText(nextText)
+    setSignalBytes(null)
+    setSourceMetadata(createManualMetadata())
+    setInputMode(detectSignalInputMode({ text: nextText }))
+    setResults([])
+    setErrorMessage('')
+  }
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      const bytes = new Uint8Array(arrayBuffer)
+      const decodedText = new TextDecoder().decode(bytes)
+      const detectedMode = detectSignalInputMode({ file, text: decodedText })
+
+      setSignalText(decodedText)
+      setSignalBytes(bytes)
+      setInputMode(detectedMode)
+      setSourceMetadata({
+        sourceType: 'file',
+        name: file.name,
+        mimeType: file.type || 'No especificado',
+        size: file.size,
+      })
+      setResults([])
+      setErrorMessage('')
+      setStatusMessage(`Archivo "${file.name}" cargado como ${SIGNAL_INPUT_MODE_LABELS[detectedMode]}.`)
+    } catch (error) {
+      setErrorMessage(error.message ?? 'No se pudo leer el archivo seleccionado.')
+      setStatusMessage('No se pudo cargar el archivo.')
+    }
+  }
+
+  const handleLoadSample = () => {
+    setSignalText(SAMPLE_TEXT)
+    setSignalBytes(null)
+    setSourceMetadata(createManualMetadata())
+    setInputMode(SignalInputMode.CHARACTERS)
+    setResults([])
+    setStatusMessage('Texto base cargado correctamente.')
+    setErrorMessage('')
+  }
 
   const handleSimulation = async (event) => {
     event.preventDefault()
     setErrorMessage('')
 
-    if (!textInput.trim()) {
-      setErrorMessage('Debes ingresar un texto antes de ejecutar la simulación.')
-      setStatusMessage('No se pudo ejecutar la simulación.')
+    let signalInput
+    try {
+      signalInput = normalizeSignalInput({
+        text: signalText,
+        bytes: signalBytes,
+        mode: inputMode,
+        sourceMetadata,
+      })
+    } catch (error) {
+      setErrorMessage(error.message ?? 'La senal no se pudo interpretar.')
+      setStatusMessage('No se pudo ejecutar la simulacion.')
       return
     }
 
     setIsRunning(true)
-    setStatusMessage('Ejecutando simulación…')
+    setStatusMessage('Ejecutando simulacion...')
 
     try {
-      const nextResults = await comparatorService.compare(textInput, Number(extensionOrder))
+      const nextResults = await comparatorService.compare(signalInput, Number(extensionOrder))
       setResults(nextResults)
       setResultsVersion((previous) => previous + 1)
-      setStatusMessage('Simulación completada correctamente.')
+      setStatusMessage('Simulacion completada correctamente.')
     } catch (error) {
-      setErrorMessage(error.message ?? 'Ocurrió un error durante la simulación.')
-      setStatusMessage('No se pudo completar la simulación.')
+      setErrorMessage(error.message ?? 'Ocurrio un error durante la simulacion.')
+      setStatusMessage('No se pudo completar la simulacion.')
     } finally {
       setIsRunning(false)
     }
@@ -68,10 +175,10 @@ function App() {
       </a>
       <header className="page-header">
         <p className="project-tag">Proyecto del Curso</p>
-        <h1>Simulador Comparativo de Algoritmos de Compresión de Texto</h1>
+        <h1>Simulador Comparativo de Algoritmos de Compresion de Senales</h1>
         <p className="project-description">
-          Plataforma interactiva para comparar rendimiento de algoritmos de compresión sobre un
-          mismo corpus y contrastar resultados empíricos con la teoría de la información.
+          Plataforma interactiva para cargar una fuente discreta, comprimirla con varios codigos y
+          comparar sus metricas sobre la misma senal.
         </p>
         <p className="project-members">
           <span>Integrantes:</span> Sebastian Alarcon, Manuel Navas, Cristian Cubillos
@@ -80,47 +187,72 @@ function App() {
 
       <main id="main-content" className="layout">
         <section className="panel" aria-labelledby="input-title">
-          <h2 id="input-title">Entrada del Corpus</h2>
+          <h2 id="input-title">Entrada de la Senal</h2>
           <form className="input-form" onSubmit={handleSimulation}>
-            <label htmlFor="text-input">Texto a Comprimir</label>
+            <label htmlFor="file-input">Cargar Archivo o Documento</label>
+            <input
+              id="file-input"
+              name="fileInput"
+              type="file"
+              onChange={handleFileChange}
+              aria-describedby="file-help"
+            />
+            <p id="file-help" className="field-help">
+              Soporta texto, CSV/tokens, bits y archivos interpretados como bytes.
+            </p>
+
+            <label htmlFor="text-input">Contenido de la Senal</label>
             <textarea
               id="text-input"
               name="textInput"
               autoComplete="off"
-              value={textInput}
-              onChange={(event) => setTextInput(event.target.value)}
-              placeholder="Ingresa o pega un texto real para analizar…"
+              value={signalText}
+              onChange={handleTextChange}
+              placeholder="Ingresa texto, bits o tokens como 12,15,12,14..."
               rows={8}
             />
 
-            <div className="field-group">
-              <label htmlFor="extension-order">Orden de Fuente Extendida</label>
-              <input
-                id="extension-order"
-                name="extensionOrder"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={5}
-                value={extensionOrder}
-                onChange={(event) => setExtensionOrder(event.target.value)}
-              />
+            <div className="field-grid">
+              <div className="field-group">
+                <label htmlFor="input-mode">Interpretacion</label>
+                <select
+                  id="input-mode"
+                  name="inputMode"
+                  value={inputMode}
+                  onChange={(event) => {
+                    setInputMode(event.target.value)
+                    setErrorMessage('')
+                  }}
+                >
+                  {Object.entries(SIGNAL_INPUT_MODE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="extension-order">Orden de Fuente Extendida</label>
+                <input
+                  id="extension-order"
+                  name="extensionOrder"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={5}
+                  value={extensionOrder}
+                  onChange={(event) => setExtensionOrder(event.target.value)}
+                />
+              </div>
             </div>
 
             <div className="quick-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setTextInput(SAMPLE_TEXT)
-                  setStatusMessage('Texto base cargado correctamente.')
-                  setErrorMessage('')
-                }}
-              >
+              <button type="button" className="secondary-button" onClick={handleLoadSample}>
                 Cargar Texto Base
               </button>
               <button type="submit" className="primary-button" disabled={isRunning}>
-                {isRunning ? 'Ejecutando…' : 'Ejecutar Comparación'}
+                {isRunning ? 'Ejecutando...' : 'Ejecutar Comparacion'}
               </button>
             </div>
           </form>
@@ -135,18 +267,30 @@ function App() {
             {statusMessage}
           </p>
 
-          <ul className="stats-list">
+          <ul className="stats-list signal-stats">
             <li>
-              <span>Caracteres</span>
-              <strong>{textStats.characters}</strong>
+              <span>Fuente</span>
+              <strong>{signalStats.name}</strong>
             </li>
             <li>
-              <span>Palabras</span>
-              <strong>{textStats.words}</strong>
+              <span>Tipo</span>
+              <strong>{signalStats.mimeType || 'No especificado'}</strong>
             </li>
             <li>
-              <span>Símbolos Únicos</span>
-              <strong>{textStats.symbols}</strong>
+              <span>Tamano</span>
+              <strong>{signalStats.size != null ? formatBytes(signalStats.size) : 'Manual'}</strong>
+            </li>
+            <li>
+              <span>Modo</span>
+              <strong>{signalStats.modeLabel}</strong>
+            </li>
+            <li>
+              <span>Simbolos</span>
+              <strong>{signalStats.totalSymbols}</strong>
+            </li>
+            <li>
+              <span>Unicos</span>
+              <strong>{signalStats.uniqueSymbols}</strong>
             </li>
           </ul>
         </section>
@@ -161,7 +305,7 @@ function App() {
                   <th>Estado</th>
                   <th>Ratio</th>
                   <th>Longitud Promedio</th>
-                  <th>Entropía</th>
+                  <th>Entropia</th>
                   <th>Tiempo (ms)</th>
                 </tr>
               </thead>
@@ -194,7 +338,7 @@ function App() {
                 ) : (
                   <tr>
                     <td colSpan={6} className="empty-table">
-                      Ejecuta la comparación para visualizar métricas.
+                      Ejecuta la comparacion para visualizar metricas.
                     </td>
                   </tr>
                 )}

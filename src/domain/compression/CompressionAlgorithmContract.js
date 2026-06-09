@@ -1,7 +1,7 @@
 /**
- * Estados posibles para el resultado de una ejecución.
- * - READY: algoritmo implementado y métricas disponibles.
- * - PENDING: contrato definido pero implementación pendiente.
+ * Estados posibles para el resultado de una ejecucion.
+ * - READY: algoritmo implementado y metricas disponibles.
+ * - PENDING: contrato definido pero implementacion pendiente.
  */
 export const AlgorithmStatus = Object.freeze({
   READY: 'ready',
@@ -10,7 +10,7 @@ export const AlgorithmStatus = Object.freeze({
 
 /**
  * Identificadores estables de algoritmos.
- * Se usan como clave técnica en UI, servicios y resultados.
+ * Se usan como clave tecnica en UI, servicios y resultados.
  */
 export const AlgorithmId = Object.freeze({
   HUFFMAN: 'huffman',
@@ -20,21 +20,19 @@ export const AlgorithmId = Object.freeze({
 })
 
 /**
- * Entrada estándar para cualquier algoritmo de compresión.
- * @description
- * `extensionOrder` permite que algoritmos basados en fuentes extendidas
- * ajusten su procesamiento sin cambiar el contrato común.
+ * Entrada estandar para cualquier algoritmo de compresion.
  *
  * @typedef {Object} CompressionInput
- * @property {string} text
- * @property {number} extensionOrder
+ * @property {Array<string>} symbols Fuente discreta normalizada.
+ * @property {number} originalBitLength Tamano original en bits.
+ * @property {string} sourceText Texto decodificado o ingresado por el usuario.
+ * @property {Object} sourceMetadata Metadata de archivo, modo y estadisticas.
+ * @property {string} [text] Compatibilidad temporal con entradas antiguas.
+ * @property {number} extensionOrder Orden para algoritmos de fuentes extendidas.
  */
 
 /**
- * Métricas comparables entre algoritmos.
- * @description
- * Todas las métricas se modelan como números para facilitar ordenamiento,
- * agregaciones y visualización homogénea en la interfaz.
+ * Metricas comparables entre algoritmos.
  *
  * @typedef {Object} CompressionMetrics
  * @property {number} compressionRatio
@@ -44,10 +42,7 @@ export const AlgorithmId = Object.freeze({
  */
 
 /**
- * Resultado normalizado de una ejecución.
- * @description
- * Cuando el estado es `pending`, `metrics` debe ser `null` y `note`
- * explica por qué aún no hay cálculo real.
+ * Resultado normalizado de una ejecucion.
  *
  * @typedef {Object} CompressionResult
  * @property {string} id
@@ -58,10 +53,7 @@ export const AlgorithmId = Object.freeze({
  */
 
 /**
- * Contrato público que debe cumplir cualquier algoritmo.
- * @description
- * - `getMetadata` expone identidad para listado y renderizado.
- * - `run` ejecuta el procesamiento y retorna un resultado normalizado.
+ * Contrato publico que debe cumplir cualquier algoritmo.
  *
  * @typedef {Object} CompressionAlgorithm
  * @property {() => { id: string, name: string }} getMetadata

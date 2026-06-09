@@ -1,6 +1,6 @@
 import { AlgorithmId } from '../CompressionAlgorithmContract'
 import { BaseCompressionAlgorithm } from '../BaseCompressionAlgorithm'
-import { buildCompressionMetrics, buildFrequencyTable } from './codingMetrics'
+import { buildCompressionMetrics, buildFrequencyTable, resolveSymbols } from './codingMetrics'
 
 const findBalancedSplit = (symbols) => {
   const total = symbols.reduce((sum, { count }) => sum + count, 0)
@@ -48,14 +48,14 @@ export class ShannonFanoAlgorithm extends BaseCompressionAlgorithm {
     this.validateInput(input)
 
     const start = performance.now()
-    const text = input.text
-    const frequencyTable = buildFrequencyTable(text)
+    const symbols = resolveSymbols(input)
+    const frequencyTable = buildFrequencyTable(symbols)
     const sortedSymbols = [...frequencyTable].sort(
       (first, second) => second.count - first.count || first.index - second.index,
     )
     const codeMap = assignShannonFanoCodes(sortedSymbols)
     const { metrics, encodedBits, originalBits } = buildCompressionMetrics(
-      text,
+      input,
       frequencyTable,
       codeMap,
       start,
@@ -63,7 +63,7 @@ export class ShannonFanoAlgorithm extends BaseCompressionAlgorithm {
 
     return this.createReadyResult(
       metrics,
-      `Implementacion real de Shannon-Fano. ${frequencyTable.length} simbolos, ${encodedBits} bits codificados frente a ${originalBits} bits originales.`,
+      `Implementacion real de Shannon-Fano. ${symbols.length} simbolos procesados, ${frequencyTable.length} simbolos unicos, ${encodedBits} bits codificados frente a ${originalBits} bits originales.`,
     )
   }
 }

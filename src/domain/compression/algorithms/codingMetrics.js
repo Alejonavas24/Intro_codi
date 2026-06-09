@@ -1,7 +1,9 @@
-export const buildFrequencyTable = (text) => {
+export const resolveSymbols = (input) => input.symbols ?? Array.from(input.text)
+
+export const buildFrequencyTable = (symbols) => {
   const frequencyMap = new Map()
 
-  for (const symbol of text) {
+  for (const symbol of symbols) {
     frequencyMap.set(symbol, (frequencyMap.get(symbol) ?? 0) + 1)
   }
 
@@ -34,12 +36,14 @@ export const calculateOriginalBits = (text) => new TextEncoder().encode(text).le
 
 export const roundMetric = (value) => Number(value.toFixed(3))
 
-export const buildCompressionMetrics = (text, frequencyTable, codeMap, startTime) => {
+export const buildCompressionMetrics = (input, frequencyTable, codeMap, startTime) => {
   const totalSymbols = frequencyTable.reduce((sum, { count }) => sum + count, 0)
   const entropy = calculateEntropy(frequencyTable, totalSymbols)
   const averageCodeLength = calculateAverageCodeLength(frequencyTable, totalSymbols, codeMap)
   const encodedBits = calculateEncodedBits(frequencyTable, codeMap)
-  const originalBits = calculateOriginalBits(text)
+  const originalBits =
+    input.originalBitLength ??
+    (typeof input.text === 'string' ? calculateOriginalBits(input.text) : totalSymbols * 8)
   const compressionRatio = originalBits / encodedBits
   const executionTimeMs = Math.max(performance.now() - startTime, 0.001)
 

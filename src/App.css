@@ -76,6 +76,8 @@
 }
 
 .input-form textarea,
+.input-form select,
+.input-form input[type='file'],
 .input-form input[type='number'] {
   font: inherit;
   color: inherit;
@@ -83,6 +85,14 @@
   background: var(--bg);
   border-radius: 10px;
   padding: 10px 12px;
+}
+
+.input-form select {
+  width: 100%;
+}
+
+.input-form input[type='file'] {
+  width: 100%;
 }
 
 .input-form textarea {
@@ -93,6 +103,17 @@
 
 .input-form textarea::placeholder {
   color: var(--text-soft);
+}
+
+.field-help {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .field-group {
@@ -182,6 +203,7 @@ textarea:focus-visible {
 .stats-list strong {
   color: var(--text-h);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .table-wrapper {
@@ -325,6 +347,10 @@ th {
   }
 
   .stats-list {
+    grid-template-columns: 1fr;
+  }
+
+  .field-grid {
     grid-template-columns: 1fr;
   }
 
