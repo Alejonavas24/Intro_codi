@@ -94,6 +94,7 @@ export const normalizeSignalInput = ({ text = '', bytes = null, mode, sourceMeta
   return {
     symbols,
     originalBitLength,
+    sourceBytes: hasBytes ? bytes : null,
     sourceText: text,
     sourceMetadata: {
       ...sourceMetadata,

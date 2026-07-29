@@ -15,8 +15,11 @@ export const AlgorithmStatus = Object.freeze({
 export const AlgorithmId = Object.freeze({
   HUFFMAN: 'huffman',
   SHANNON_FANO: 'shannon-fano',
-  OPTIMAL_CODE: 'optimal-code',
+  HAMMING: 'hamming',
   EXTENDED_SOURCE: 'extended-source',
+  RLE: 'rle',
+  LZW: 'lzw',
+  DEFLATE: 'deflate',
 })
 
 /**
@@ -39,6 +42,7 @@ export const AlgorithmId = Object.freeze({
  * @property {number} averageCodeLength
  * @property {number} executionTimeMs
  * @property {number} entropy
+ * @property {number} compressedSizeBytes
  */
 
 /**

@@ -10,8 +10,9 @@ SPA desarrollada con React + Vite para comparar algoritmos de compresion sobre u
 
 ## Objetivo del proyecto
 
-La aplicacion permite ingresar un texto y ejecutar una comparacion entre distintos algoritmos de compresion.  
-Actualmente la arquitectura deja definidos los contratos para todos los algoritmos y una implementacion mock funcional para Huffman.
+La aplicacion permite ingresar texto, bits, tokens o cargar archivos e imagenes para comparar
+distintos algoritmos de compresion y codificacion. Incluye implementaciones funcionales de
+Huffman, Shannon-Fano, RLE, LZW, Deflate, Hamming (7,4) y fuentes extendidas.
 
 ## Requisitos
 
@@ -41,6 +42,20 @@ Actualmente la arquitectura deja definidos los contratos para todos los algoritm
 - `src/domain/compression/BaseCompressionAlgorithm.js`: comportamiento comun para algoritmos.
 - `src/domain/compression/CompressionComparatorService.js`: servicio orquestador de comparaciones.
 - `src/domain/compression/algorithms/`: implementaciones concretas por algoritmo.
+
+## Comparacion de imagenes
+
+La aplicacion ofrece dos pestañas:
+
+1. **Archivos y señales:** compara los bytes del archivo PNG, JPEG u otro formato codificado.
+2. **Comparación por píxeles:** decodifica la imagen con Canvas y compara los canales RGBA
+   reales, equivalentes a 32 bits por píxel.
+
+En ambos casos se puede comparar ratio, tamaño codificado, longitud promedio, entropía y tiempo.
+
+Los formatos como PNG y JPEG ya incluyen compresion, por lo que algunos algoritmos pueden
+producir un resultado mayor que el archivo original. Hamming agrega redundancia para proteger
+datos y no participa en la seleccion de la mejor compresion.
 
 ## Como colaborar
 

@@ -53,6 +53,7 @@ export const buildCompressionMetrics = (input, frequencyTable, codeMap, startTim
       averageCodeLength: roundMetric(averageCodeLength),
       executionTimeMs: roundMetric(executionTimeMs),
       entropy: roundMetric(entropy),
+      compressedSizeBytes: Math.ceil(encodedBits / 8),
     },
     encodedBits,
     originalBits,
