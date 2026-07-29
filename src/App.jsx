@@ -429,7 +429,7 @@ function App() {
           algoritmos y métricas.
         </p>
         <p className="project-members">
-          <span>Integrantes:</span> Sebastian Alarcon, Manuel Navas, Cristian Cubillos
+          <span>Integrantes:</span> Manuel Navas
         </p>
       </header>
 
