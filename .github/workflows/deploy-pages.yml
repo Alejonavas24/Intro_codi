@@ -2,8 +2,6 @@ name: Deploy Vite app to GitHub Pages
 
 on:
   push:
-    branches:
-      - 'Entrega_2+'
   workflow_dispatch:
 
 permissions:
